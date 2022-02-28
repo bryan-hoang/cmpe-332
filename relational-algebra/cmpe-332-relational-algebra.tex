@@ -1,0 +1,98 @@
+\documentclass[
+  coursecode={CMPE 332},
+  assignmentname={Relational Algebra Assignment},
+  studentnumber=20053722,
+  name={Bryan Hoang},
+  draft,
+  % final,
+]{
+  ltxanswer%
+}
+
+\usepackage{bch-style}
+
+\begin{document}
+  \noindent Let \(T_{i}, \forall i \in \Z_{>0}\) refer to temporary variables and let \(R\) be the final result of each question.
+  \begin{questions}
+    \question[2] List the names of all female daughters along with the employee's SSN to whom the dependent is related.
+    \begin{solution}
+      \begin{equation*}
+        R \leftarrow \pi_{\text{ESSN, DEPENDENT\_NAME}}(\sigma_{\text{SEX = F and Relationship = Daughter}}(\text{DEPENDENT})).
+      \end{equation*}
+    \end{solution}
+
+    \question[2] Make a list of all birthdates in this database. You should include birthdates of employees as well as those of dependents. There should be only ONE column and duplicates should be eliminated.
+    \begin{solution}
+      \begin{equation*}
+        R \leftarrow \pi_{\text{BDATE}}(\text{EMPLOYEE}) \cup \pi_{\text{BDATE}}(\text{DEPENDENT}).
+      \end{equation*}
+    \end{solution}
+
+    \question[2] Show employees that do not work on any projects (i.e., they have not logged any hours on any projects).  List their SSN and last names.
+    \begin{solution}
+      \begin{equation*}
+        R \leftarrow \pi_{\text{LNAME, SSN}}(\sigma_{\text{HOURS = NULL}}(\text{EMPLOYEE} \bowtie_{\text{SSN = ESSN}} \text{WORKS\_ON})).
+      \end{equation*}
+    \end{solution}
+
+    \question[2] What is the average salary of all employees who have the same middle initial? (This is sure to be useful information!!!)
+    \begin{solution}
+      \begin{equation*}
+        R \leftarrow\ _{\text{M}} \mathcal{F}_{\mathrm{avg}(\text{SALARY})}.
+      \end{equation*}
+    \end{solution}
+
+    \question[2] Show the names of all projects  located in Houston along with their associated department name and the department's location.
+    \begin{solution}
+      \begin{align*}
+        T_{1} &\leftarrow \sigma_{\text{PLOCATON = Houston}}(\text{PROJ}) \bowtie_{\text{DNUM = DNUMBER}} \text{DEPT} \\
+        R     &\leftarrow \pi_{\text{PNAME, DNAME, DLOCATION}}(T_{1} \bowtie \text{DEPT\_LOC}).
+      \end{align*}
+    \end{solution}
+
+    \question[2] Employees spend some number of hours on each of their projects. For each project, list the project number and the names of all employees that work on that project for more than the average number of hours. To clarify, if Karen, Shari, and Ron all work on project \#3 and Karen works 20 hours, Shari works 10 hours and Ron works 15 hours, the average number of hours worked on this project by all employees is 15.  In this case, only Karen works on the project for more hours than the average. Your resulting table will have 3 columns (names can differ from these): Project Number and employee first name and last name.
+    \begin{solution}
+      \begin{align*}
+        T_{1} &\leftarrow\ _{\text{PNO}} \mathcal{F}_{\mathrm{avg}(\text{HOURS})\text{ as AVG\_PROJ\_HOURS}}(\text{WORKS\_ON}) \\
+        T_{2} &\leftarrow \sigma_{\text{HOURS > AVG\_PROJ\_HOURS}}(\text{WORKS\_ON} \bowtie T_{1})                             \\
+        R     &\leftarrow \pi_{\text{PNO, FNAME, LNAME}}(T_{2} \bowtie_{\text{ESSN = SSN}} \text{EMPLOYEE}).
+      \end{align*}
+    \end{solution}
+
+    \question[2] List the employees that work on BOTH (not either or) a project located in Belfast and a project located in Houston (as indicated by the Plocation attribute). List their SSN and last name.
+    \begin{solution}
+      \begin{align*}
+        T_{1} &\leftarrow \pi_{\text{PNUMBER}}(\sigma_{\text{PLOCATON = Belfast}}(\text{PROJ}))                     \\
+        T_{2} &\leftarrow \pi_{\text{PNUMBER}}(\sigma_{\text{PLOCATON = Houston}}(\text{PROJ}))                     \\
+        T_{3} &\leftarrow \pi_{\text{ESSN}}(T_{1} \bowtie_{\text{PNUMBER = PNO}} \text{WORKS\_ON})                  \\
+        T_{4} &\leftarrow \pi_{\text{ESSN}}(T_{2} \bowtie_{\text{PNUMBER = PNO}} \text{WORKS\_ON})                  \\
+        R     &\leftarrow \pi_{\text{ESSN, LNAME}}((T_{3} \cap T_{4}) \bowtie_{\text{ESSN = SSN}} \text{EMPLOYEE}).
+      \end{align*}
+    \end{solution}
+
+    \question[2] Make a list of all employee's last names along with the last name of their supervisor.  (Use superssn from the employee table to find their supervisor's name).  Your resulting table should have two columns named: EmployeeName, SupervisorName.
+    \begin{solution}
+      \begin{equation*}
+        R_{(SupervisorName, EmployeeName)} \leftarrow \pi_{\text{LNAME, EMPLOYEE.LNAME}}(\text{EMPLOYEE} \fullouterjoin_{\text{SSN = SUPERSSN}} \text{EMPLOYEE}).
+      \end{equation*}
+    \end{solution}
+
+    \question[2] Which department has the most employees?  Show the name(s) of the department(s) with the most employees.
+    \begin{solution}
+      \begin{align*}
+        T_{1} &\leftarrow \ _{\text{DNO}}\mathcal{F}_{\mathrm{count}(SSN)\text{ as EMPLOYEE\_COUNT}}(\text{EMPLOYEE})                        \\
+        R     &\leftarrow \pi_{\text{DNAME}}(\mathcal{F}_{\max(\text{EMPLOYEE\_COUNT})}(T_{1}) \bowtie_{\text{DNO = DNUMBER}}(\text{DEPT})).
+      \end{align*}
+    \end{solution}
+
+    \question[2] Show the ESSNs of employees who have a spouse but not a son.
+    \begin{solution}
+      \begin{align*}
+        T_{1} &\leftarrow \text{DEPENDENT} \bowtie_{\text{ESSN = SSN}} \text{EMPLOYEE} \\
+        T_{2} &\leftarrow \sigma_{\text{Relationship = SPOUSE}}(T_{1})                 \\
+        T_{3} &\leftarrow \sigma_{\text{Relationship = SON}}(T_{1})                    \\
+        R     &\leftarrow \pi_{\text{ESSN}}(T_{2} - T_{3}).
+      \end{align*}
+    \end{solution}
+  \end{questions}
+\end{document}
